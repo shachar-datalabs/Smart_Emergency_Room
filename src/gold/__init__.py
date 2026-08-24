@@ -1,0 +1,1 @@
+"""BI-ready Gold outputs."""
