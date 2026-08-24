@@ -1,0 +1,33 @@
+# MIMIC and generated datasets
+data/
+*.csv
+*.csv.gz
+*.parquet
+
+# Secrets and credentials
+.env
+.env.*
+credentials/
+*.key
+*.pem
+service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Spark and local runtime state
+.sparkStaging/
+checkpoint/
+checkpoints/
+metastore_db/
+derby.log
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
