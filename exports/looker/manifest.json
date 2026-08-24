@@ -1,0 +1,89 @@
+{
+  "columns": {
+    "ACTIVE_PATIENTS": [
+      "visit_id",
+      "patient_id",
+      "arrival_time",
+      "last_event_time",
+      "triage_level",
+      "current_status",
+      "age",
+      "sex",
+      "heart_rate",
+      "systolic_bp",
+      "diastolic_bp",
+      "spo2",
+      "waiting_minutes",
+      "time_in_ed_minutes",
+      "expected_wait_minutes",
+      "historical_p90_wait_minutes",
+      "wait_vs_expected_minutes",
+      "wait_ratio",
+      "attention_score",
+      "attention_level",
+      "attention_reason",
+      "historical_cohort",
+      "last_update_timestamp"
+    ],
+    "DATA_QUALITY": [
+      "check_name",
+      "status",
+      "record_count",
+      "description",
+      "generated_at"
+    ],
+    "ED_KPIS": [
+      "snapshot_time",
+      "active_patients",
+      "arrivals",
+      "admissions",
+      "discharges",
+      "avg_wait_minutes",
+      "median_wait_minutes",
+      "patients_above_expected",
+      "high_attention_patients",
+      "critical_attention_patients"
+    ],
+    "ED_LOAD_15MIN": [
+      "window_start",
+      "window_end",
+      "active_patients",
+      "new_arrivals",
+      "admissions",
+      "discharges",
+      "avg_wait_minutes",
+      "high_attention_count"
+    ],
+    "HISTORICAL_CONTEXT": [
+      "cohort_key",
+      "match_level",
+      "triage_level",
+      "age_group",
+      "arrival_hour",
+      "patient_count",
+      "avg_wait_minutes",
+      "median_wait_minutes",
+      "p90_wait_minutes",
+      "avg_los_minutes",
+      "median_los_minutes",
+      "p90_los_minutes",
+      "admission_rate"
+    ]
+  },
+  "package": "Smart_Emergency_Room_Looker_Source",
+  "rows": {
+    "ACTIVE_PATIENTS": 5,
+    "DATA_QUALITY": 11,
+    "ED_KPIS": 1,
+    "ED_LOAD_15MIN": 11,
+    "HISTORICAL_CONTEXT": 702
+  },
+  "sheet_order": [
+    "ED_KPIS",
+    "ED_LOAD_15MIN",
+    "ACTIVE_PATIENTS",
+    "HISTORICAL_CONTEXT",
+    "DATA_QUALITY"
+  ],
+  "workbook_source": "data/looker_workbook_source.json"
+}

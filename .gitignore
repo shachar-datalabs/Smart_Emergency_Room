@@ -21,6 +21,9 @@ __pycache__/
 .coverage
 .venv/
 venv/
+node_modules/
+exports/looker/previews/
+*.inspect.ndjson
 
 # Spark and local runtime state
 .sparkStaging/

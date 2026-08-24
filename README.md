@@ -162,3 +162,16 @@ The dashboard contract is in
 [smart_er_dashboard.md](dashboards/smart_er_dashboard.md). A future production
 deployment can replace local outputs with GCS/BigQuery sinks and connect Looker
 Studio, while retaining the same source adapter, event and Gold contracts.
+
+The presentation-ready Looker handoff is generated with:
+
+```bash
+python scripts/export_looker_data.py
+node scripts/build_looker_workbook.mjs
+```
+
+This writes five CSV files plus
+`exports/looker/Smart_Emergency_Room_Looker_Source.xlsx`. Dashboard layout,
+field aggregations, and Android setup are documented in
+`docs/looker_studio_dashboard.md`, `docs/looker_field_dictionary.md`, and
+`docs/LOOKER_PHONE_SETUP.md`.

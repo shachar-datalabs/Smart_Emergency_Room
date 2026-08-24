@@ -1,0 +1,2 @@
+snapshot_time,active_patients,arrivals,admissions,discharges,avg_wait_minutes,median_wait_minutes,patients_above_expected,high_attention_patients,critical_attention_patients
+2026-08-24T21:07:00Z,5,12,1,6,169.0,169.0,5,5,2

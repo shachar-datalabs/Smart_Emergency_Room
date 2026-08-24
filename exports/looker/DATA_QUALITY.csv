@@ -1,0 +1,12 @@
+check_name,status,record_count,description,generated_at
+processed_historical_records,PASS,16025,NHAMCS rows processed,2026-08-24T20:43:32.836351+00:00
+quality_flagged_records,WARN,155,Records retained with one or more quality flags,2026-08-24T20:43:32.836351+00:00
+rejected_historical_records,PASS,0,Historical records rejected,2026-08-24T20:43:32.836351+00:00
+duplicate_visits,PASS,0,Duplicate canonical visit identifiers,2026-08-24T20:43:32.836351+00:00
+invalid_triage,PASS,0,Visits with an invalid triage category,2026-08-24T20:43:32.836351+00:00
+invalid_vitals,WARN,170,Vital checks flagged; records remain auditable,2026-08-24T20:43:32.836351+00:00
+processed_stream_events,PASS,55,Synthetic events processed,2026-08-24T20:43:32.836351+00:00
+duplicate_events,PASS,0,Duplicate event identifiers ignored,2026-08-24T20:43:32.836351+00:00
+malformed_events,PASS,0,Events with malformed JSON,2026-08-24T20:43:32.836351+00:00
+late_events,PASS,0,Events later than the configured watermark,2026-08-24T20:43:32.836351+00:00
+rejected_stream_events,PASS,0,Stream events quarantined or rejected,2026-08-24T20:43:32.836351+00:00

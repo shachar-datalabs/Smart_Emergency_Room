@@ -66,6 +66,8 @@ def build_cohorts(silver_path: Path, destination: Path) -> int:
                 "median_wait_minutes": round(statistics.median(waits), 2) if waits else None,
                 "p90_wait_minutes": _percentile(waits, 0.9),
                 "avg_los_minutes": round(statistics.fmean(stays), 2) if stays else None,
+                "median_los_minutes": round(statistics.median(stays), 2) if stays else None,
+                "p90_los_minutes": _percentile(stays, 0.9),
                 "admission_rate": round(admitted / len(records), 6),
             }
 
