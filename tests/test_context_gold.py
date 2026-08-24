@@ -69,3 +69,15 @@ class ContextGoldTests(unittest.TestCase):
         self.assertEqual(1, kpis["active_patients"])
         self.assertTrue((self.root / "gold/current_ed_state.jsonl").exists())
         self.assertGreaterEqual(len(list(read_jsonl(self.root / "gold/ed_load_15min.jsonl"))), 1)
+
+    def test_windows_remain_ordered_across_midnight(self) -> None:
+        events = [
+            {"event_type": "ARRIVAL", "event_time": "2026-01-01T23:59:00Z"},
+            {"event_type": "DISCHARGE", "event_time": "2026-01-02T00:01:00Z"},
+        ]
+        build_gold([self.state], events, self.cohorts, self.root / "midnight")
+        for row in read_jsonl(self.root / "midnight/ed_load_15min.jsonl"):
+            start = datetime.fromisoformat(row["window_start"])
+            end = datetime.fromisoformat(row["window_end"])
+            self.assertGreater(end, start)
+            self.assertEqual(15 * 60, (end - start).total_seconds())

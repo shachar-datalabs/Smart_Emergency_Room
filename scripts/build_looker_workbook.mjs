@@ -11,6 +11,7 @@ const previewDir = path.join(outputDir, "previews");
 await fs.mkdir(previewDir, { recursive: true });
 
 const workbook = Workbook.create();
+const excelUtcSerial = (value) => Date.parse(value) / 86400000 + 25569;
 const columnName = (index) => {
   let name = "";
   for (let value = index + 1; value > 0; value = Math.floor((value - 1) / 26)) {
@@ -28,7 +29,7 @@ for (const sheetName of source.sheet_order) {
   const values = [headers, ...rows.map((row) => headers.map((header) => {
     const value = row[header];
     if (value === null || value === undefined) return null;
-    if (dateFields.has(header)) return new Date(value);
+    if (dateFields.has(header)) return excelUtcSerial(value);
     return value;
   }))];
   const sheet = workbook.worksheets.add(sheetName);

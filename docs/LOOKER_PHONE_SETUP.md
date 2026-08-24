@@ -1,11 +1,11 @@
 # Android setup — Smart Emergency Room
 
-The data is already in [Smart Emergency Room - Looker Data](https://docs.google.com/spreadsheets/d/1UWjWKcKPLMPaaq_PGcRD1MjrhUlEZr3uf-470MomPWQ/edit); do not edit it.
+1. Open [Looker Studio](https://lookerstudio.google.com/) in Chrome → menu **⋮** → **Desktop site**; rotate to landscape.
+2. Tap **Create → Report → BigQuery** and authorize the same Google account if prompted.
+3. Select project `shachar-bigquery-lab` → dataset `smart_er_gold` → table `ed_kpis` → **Add**.
+4. Tap **Add data → BigQuery** four times and add `ed_load_15min`, `active_patients`, `historical_context`, and `data_quality` from the same project/dataset.
+5. Name the report **Smart Emergency Room** and build the one-page layout in `looker_studio_dashboard.md`.
 
-1. Open [Looker Studio](https://lookerstudio.google.com/) in Chrome. If editing controls are hidden, open Chrome menu → **Desktop site** and rotate to landscape.
-2. Tap **Create → Report → Google Sheets**.
-3. Select **Smart Emergency Room - Looker Data**, choose `ED_KPIS`, then **Add**.
-4. Use **Resource → Manage added data sources → Add a data source** and add the same Sheet four more times, selecting `ED_LOAD_15MIN`, `ACTIVE_PATIENTS`, `HISTORICAL_CONTEXT`, and `DATA_QUALITY`.
-5. Name the report **Smart Emergency Room** and build the single page using `looker_studio_dashboard.md`.
+Exact primary source: `shachar-bigquery-lab.smart_er_gold`. Do not select **Custom Query**, BI Engine, or the Google Sheet. The existing Sheet is backup only.
 
-Only the report UI remains manual. Tabs, headers, types, metrics, categories, percentages, timestamps, and attention reasons are prepared.
+Looker Studio queries BigQuery when the report refreshes and may consume billed bytes. Refresh only during the demo and keep the tables small.

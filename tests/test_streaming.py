@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from datetime import UTC, datetime
+from pathlib import Path
 
+from src.common.io import write_jsonl
 from src.simulator.patient_simulator import generate_events
 from src.streaming.state import StateProcessor
 
@@ -66,3 +69,15 @@ class StreamingTests(unittest.TestCase):
         self.assertEqual(2, processor.stats["records_rejected"])
         self.assertEqual(1, processor.stats["malformed_events"])
         self.assertEqual(1, processor.stats["missing_fields"])
+
+    def test_state_can_resume_without_duplicate_visit(self) -> None:
+        processor = StateProcessor()
+        processor.process(base_event("1", "ARRIVAL", "2026-01-01T00:00:00Z", age=40))
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "state.jsonl"
+            write_jsonl(state_path, processor.current_rows())
+            resumed = StateProcessor()
+            self.assertEqual(1, resumed.restore(state_path))
+            resumed.seen.add("1")
+            self.assertFalse(resumed.process(base_event("1", "ARRIVAL", "2026-01-01T00:00:00Z", age=40)))
+            self.assertEqual(1, len(resumed.active))

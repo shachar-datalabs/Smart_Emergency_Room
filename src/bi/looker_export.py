@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from src.common.io import read_jsonl, write_json
+from src.streaming.event_schema import parse_time
 
 SHEET_ORDER = ["ED_KPIS", "ED_LOAD_15MIN", "ACTIVE_PATIENTS", "HISTORICAL_CONTEXT", "DATA_QUALITY"]
 
@@ -58,6 +59,9 @@ def build_tables(gold_dir: Path, cohort_path: Path) -> dict[str, list[dict[str, 
         {field: row.get(field) for field in load_fields}
         for row in sorted(read_jsonl(gold_dir / "ed_load_15min.jsonl"), key=lambda row: row["window_start"])
     ]
+    for row in ed_load:
+        if parse_time(row["window_end"]) <= parse_time(row["window_start"]):
+            raise ValueError(f"Invalid ED_LOAD_15MIN window: {row}")
 
     active_fields = [
         "visit_id",

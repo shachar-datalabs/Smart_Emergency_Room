@@ -30,7 +30,8 @@ flowchart LR
   C --> CE[Context + attention engine]
   ST --> CE
   CE --> G[Gold KPIs / 15-min load / active queue]
-  G --> BI[BI dashboard]
+  G --> BQ[BigQuery smart_er_gold]
+  BQ --> BI[Looker Studio]
 ```
 
 See [architecture.md](docs/architecture.md) for design details.
@@ -90,7 +91,7 @@ python scripts/run_end_to_end_demo.py
 The last command runs the entire no-broker deterministic smoke flow and writes
 Gold results under `data/gold/`.
 
-## Kafka + Spark demo
+## Kafka → Spark → BigQuery demo
 
 ```bash
 docker compose up -d
@@ -109,6 +110,33 @@ Inspect `data/streaming/current_ed_state.jsonl` and
 
 ```bash
 docker compose down
+```
+
+Synchronize the current Historical and Gold outputs with the existing BigQuery
+dataset. The default command is a no-write cost/size plan; `--apply` runs five
+small idempotent replace load jobs and no query:
+
+```bash
+python scripts/sync_bigquery.py
+python scripts/sync_bigquery.py --apply
+```
+
+Run the complete proof (`active_patients` before → one Kafka ARRIVAL → Spark →
+BigQuery → `active_patients` after):
+
+```bash
+python scripts/demo_bigquery.py
+```
+
+The demo creates only local ephemeral Docker services/topics, reads BigQuery
+with `bq head`, performs small replace loads, and always runs `docker compose
+down`. No cloud compute, scheduled query, or continuous query is created.
+
+Free table-read checks:
+
+```bash
+bq head --max_rows=10 shachar-bigquery-lab:smart_er_gold.ed_kpis
+bq head --max_rows=10 shachar-bigquery-lab:smart_er_gold.active_patients
 ```
 
 ## Tests
@@ -141,10 +169,10 @@ See [data_quality.md](docs/data_quality.md).
 | Cohorts JSONL | `smart_er_silver.historical_cohorts` |
 | Gold JSON/JSONL | `smart_er_gold.current_ed_state`, `ed_kpis`, `ed_load_15min` |
 
-BigQuery-compatible partitioned/clustered DDL lives under `sql/`. It was not
-executed. No NHAMCS data was uploaded and no potentially billable GCP query or
-resource was intentionally run during Phases 1–4. Existing Phase 0 bucket and
-empty datasets remain unchanged.
+BigQuery-compatible DDL lives under `sql/`. The BI tables are synchronized into
+the existing `shachar-bigquery-lab.smart_er_gold` dataset with replace load jobs
+to avoid duplicates. No VM, Dataproc, Dataflow, GKE, Pub/Sub, scheduled query,
+continuous query, or cloud streaming service is used.
 
 ## Demo outputs
 
@@ -163,15 +191,20 @@ The dashboard contract is in
 deployment can replace local outputs with GCS/BigQuery sinks and connect Looker
 Studio, while retaining the same source adapter, event and Gold contracts.
 
-The presentation-ready Looker handoff is generated with:
+The Google Sheets package remains a presentation-ready backup generated with:
 
 ```bash
 python scripts/export_looker_data.py
 node scripts/build_looker_workbook.mjs
 ```
 
-This writes five CSV files plus
+This backup writes five CSV files plus
 `exports/looker/Smart_Emergency_Room_Looker_Source.xlsx`. Dashboard layout,
 field aggregations, and Android setup are documented in
 `docs/looker_studio_dashboard.md`, `docs/looker_field_dictionary.md`, and
 `docs/LOOKER_PHONE_SETUP.md`.
+
+The primary Looker Studio source is now the five BigQuery tables in
+`shachar-bigquery-lab.smart_er_gold`. Each Looker refresh can execute BigQuery
+queries and should only be used for the short demo under the project's cost
+policy.

@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 
+from src.common.io import read_jsonl, write_jsonl
 from src.streaming.event_schema import SPARK_SCHEMA_JSON
 from src.streaming.state import StateProcessor
 
@@ -12,6 +13,7 @@ from src.streaming.state import StateProcessor
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seconds", type=int, default=45)
+    parser.add_argument("--starting-offsets", choices=("earliest", "latest"), default="earliest")
     args = parser.parse_args()
 
     from pyspark.sql import SparkSession
@@ -31,7 +33,7 @@ def main() -> None:
         spark.readStream.format("kafka")
         .option("kafka.bootstrap.servers", bootstrap)
         .option("subscribe", topic)
-        .option("startingOffsets", "earliest")
+        .option("startingOffsets", args.starting_offsets)
         .load()
         .selectExpr("CAST(value AS STRING) AS raw_value", "timestamp AS kafka_timestamp")
     )
@@ -45,13 +47,23 @@ def main() -> None:
         .dropDuplicates(["event_id"])
     )
     processor = StateProcessor(watermark_minutes=int(watermark.split()[0]))
+    state_path = output / "current_ed_state.jsonl"
+    event_log_path = output / "accepted_events.jsonl"
+    processor.restore(state_path)
+    if event_log_path.exists():
+        processor.seen.update(event["event_id"] for event in read_jsonl(event_log_path))
 
     def update_state(batch, batch_id: int) -> None:
         events = [json.loads(value) for value in batch.drop("event_time_ts").toJSON().collect()]
         for event in sorted(events, key=lambda item: item["event_time"]):
             processor.process(event)
+        previous_events = list(read_jsonl(event_log_path)) if event_log_path.exists() else []
+        known_ids = {event["event_id"] for event in previous_events}
+        write_jsonl(
+            event_log_path, [*previous_events, *(event for event in events if event["event_id"] not in known_ids)]
+        )
         processor.persist(
-            output / "current_ed_state.jsonl",
+            state_path,
             output / "quarantine_state.jsonl",
             output / "dq_streaming.json",
         )

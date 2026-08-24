@@ -1,6 +1,6 @@
 # Smart Emergency Room — Looker Studio dashboard
 
-Status: **DATA SOURCES READY — REPORT UI REQUIRES MANUAL CREATION**. The source is the native Google Sheet `Smart Emergency Room - Looker Data`. Build one 16:9 executive page. Keep the note “Operational monitoring demo — not medical decision support” visible.
+Status: **BIGQUERY DATA SOURCES READY — REPORT UI REQUIRES MANUAL CREATION**. Primary source: `shachar-bigquery-lab.smart_er_gold`; the Google Sheet is backup only. Build one 16:9 executive page. Keep “Operational monitoring demo — not medical decision support” visible.
 
 ## Header
 
@@ -10,31 +10,35 @@ Status: **DATA SOURCES READY — REPORT UI REQUIRES MANUAL CREATION**. The sourc
 
 ## KPI cards
 
-Use `ED_KPIS`; each field uses `MAX` because the tab contains one snapshot row.
+Use `ed_kpis`; each field uses `MAX` because the table contains one snapshot row.
 
 | Card | Metric |
 |---|---|
 | Active Patients | `active_patients` |
+| Arrivals | `arrivals` |
+| Admissions | `admissions` |
+| Discharges | `discharges` |
 | Average Wait | `avg_wait_minutes` |
 | Patients Above Expected | `patients_above_expected` |
 | High Attention | `high_attention_patients` |
-| Admissions | `admissions` |
-| Discharges | `discharges` |
+| Critical Attention | `critical_attention_patients` |
 
 Format waits as `0.0 min` and counts as integers. Do not sum snapshot metrics.
 
 ## ED Load — 15 Minute Windows
 
-- Source: `ED_LOAD_15MIN`
+- Source: `ed_load_15min`
 - Chart: time series
 - Dimension: `window_start` (`Date & Time`)
 - Metrics: `active_patients` (primary), `new_arrivals`, `high_attention_count`
 - Sort: `window_start` ascending
 - Aggregation: `MAX` for active/high-attention snapshots; `SUM` for new arrivals
 
+Add a second time-series chart titled **Patient Flow — Arrivals, Admissions & Discharges** using `window_start` as the dimension and `new_arrivals`, `admissions`, and `discharges` as `SUM` metrics.
+
 ## Current Attention Levels
 
-- Source: `ACTIVE_PATIENTS`
+- Source: `active_patients`
 - Chart: donut or horizontal bar
 - Dimension: `attention_level`
 - Metric: Record Count
@@ -42,8 +46,8 @@ Format waits as `0.0 min` and counts as integers. Do not sum snapshot metrics.
 
 ## Active ED Operational Queue
 
-- Source: `ACTIVE_PATIENTS`
-- Columns: `visit_id`, `triage_level`, `current_status`, `waiting_minutes`, `expected_wait_minutes`, `wait_vs_expected_minutes`, `attention_level`, `attention_reason`
+- Source: `active_patients`
+- Columns: `visit_id`, `triage_level`, `age`, `sex`, `current_status`, `waiting_minutes`, `expected_wait_minutes`, `wait_vs_expected_minutes`, `attention_score`, `attention_level`, `attention_reason`
 - Sort: `attention_score` descending, then `waiting_minutes` descending
 - Aggregation: `NONE` for dimensions; `MAX` for numeric visit attributes
 - Conditional formatting: CRITICAL dark red/white; HIGH orange/white; MEDIUM amber/dark text; LOW neutral gray.
@@ -52,7 +56,7 @@ The table is operational prioritization only and must not imply diagnosis or val
 
 ## Current vs Historical Context
 
-Use a grouped horizontal bar chart from `ACTIVE_PATIENTS`:
+Use a grouped horizontal bar chart from `active_patients`:
 
 - Dimension: `visit_id`
 - Metrics: `waiting_minutes`, `expected_wait_minutes`, `historical_p90_wait_minutes`
@@ -63,6 +67,6 @@ Title: **Current vs Historical Context**. Waiting time and ED length of stay are
 
 ## Controls
 
-Add three drop-down controls sourced from `ACTIVE_PATIENTS`: `triage_level`, `attention_level`, and `current_status`. A date control is optional and only useful for the load chart.
+Add three drop-down controls sourced from `active_patients`: `triage_level`, `attention_level`, and `current_status`. A date control is optional and only useful for the load chart.
 
 Suggested story and colors match the local HTML dashboard: executive cards, load trend, explainable attention, active queue, then historical comparison.

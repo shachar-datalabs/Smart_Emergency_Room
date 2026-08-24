@@ -35,19 +35,20 @@ def build_gold(states: list[dict], events: list[dict], cohorts: Path, output: Pa
         windows[start].append(event)
     load_rows = []
     for start, window_events in sorted(windows.items()):
+        end = start + timedelta(minutes=15)
+        if end <= start:
+            raise ValueError(f"Invalid 15-minute window: {start.isoformat()} -> {end.isoformat()}")
         active_at_end = sum(
-            event["event_type"] == "ARRIVAL"
-            for event in events
-            if parse_time(event["event_time"]) < start + timedelta(minutes=15)
+            event["event_type"] == "ARRIVAL" for event in events if parse_time(event["event_time"]) < end
         ) - sum(
             event["event_type"] in {"ADMISSION", "DISCHARGE"}
             for event in events
-            if parse_time(event["event_time"]) < start + timedelta(minutes=15)
+            if parse_time(event["event_time"]) < end
         )
         load_rows.append(
             {
                 "window_start": start.isoformat().replace("+00:00", "Z"),
-                "window_end": (start + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
+                "window_end": end.isoformat().replace("+00:00", "Z"),
                 "active_patients": max(0, active_at_end),
                 "new_arrivals": sum(e["event_type"] == "ARRIVAL" for e in window_events),
                 "admissions": sum(e["event_type"] == "ADMISSION" for e in window_events),

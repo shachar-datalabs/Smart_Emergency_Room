@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc  # noqa: UP017 - Spark image uses Python 3.8.
 
 EVENT_TYPES = {"ARRIVAL", "TRIAGE", "VITALS_UPDATE", "STATUS_UPDATE", "ADMISSION", "DISCHARGE"}
 REQUIRED = {"event_id", "event_type", "event_version", "patient_id", "visit_id", "event_time"}
 
 
 def parse_time(value: str) -> datetime:
-    parsed = datetime.fromisoformat(value)
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))  # noqa: FURB162 - Python 3.8 Spark image.
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed.astimezone(UTC)

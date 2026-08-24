@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from src.common.io import write_json, write_jsonl
+from src.common.io import read_jsonl, write_json, write_jsonl
 from src.streaming.event_schema import parse_time, validate_event
 
 TERMINAL = {"ADMISSION", "DISCHARGE"}
+UTC = timezone.utc  # noqa: UP017 - Spark image uses Python 3.8.
 
 
 class StateProcessor:
@@ -25,6 +26,32 @@ class StateProcessor:
             "missing_fields": 0,
         }
         self.quarantine: list[dict] = []
+
+    def restore(self, state_path: Path) -> int:
+        """Restore active visits so a restarted streaming job continues its prior snapshot."""
+        if not state_path.exists():
+            return 0
+        restored = 0
+        for row in read_jsonl(state_path):
+            state = {
+                key: value
+                for key, value in row.items()
+                if key not in {"waiting_minutes", "time_in_ed_minutes", "last_update_timestamp"}
+            }
+            state["_vitals_time"] = (
+                state["last_event_time"]
+                if any(
+                    state.get(field) is not None
+                    for field in ("heart_rate", "respiratory_rate", "systolic_bp", "diastolic_bp", "spo2", "pain_score")
+                )
+                else None
+            )
+            state["_triage_time"] = state["last_event_time"] if state.get("triage_level") is not None else None
+            self.active[state["visit_id"]] = state
+            event_time = parse_time(state["last_event_time"])
+            self.max_event_time = max(self.max_event_time or event_time, event_time)
+            restored += 1
+        return restored
 
     def process(self, value: str | dict) -> bool:
         event, errors = validate_event(value)
