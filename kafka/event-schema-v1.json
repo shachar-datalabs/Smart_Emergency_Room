@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-er.local/schemas/patient-event-v1.json",
+  "title": "Smart ER Patient Event v1",
+  "type": "object",
+  "required": ["event_id", "event_type", "event_version", "patient_id", "visit_id", "event_time"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"enum": ["ARRIVAL", "TRIAGE", "VITALS_UPDATE", "STATUS_UPDATE", "ADMISSION", "DISCHARGE"]},
+    "event_version": {"const": 1},
+    "patient_id": {"type": "string"},
+    "visit_id": {"type": "string"},
+    "event_time": {"type": "string", "format": "date-time"},
+    "triage_level": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+    "age": {"type": ["integer", "null"], "minimum": 0},
+    "sex": {"type": ["string", "null"]},
+    "heart_rate": {"type": ["number", "null"]},
+    "respiratory_rate": {"type": ["number", "null"]},
+    "systolic_bp": {"type": ["number", "null"]},
+    "diastolic_bp": {"type": ["number", "null"]},
+    "spo2": {"type": ["number", "null"]},
+    "pain_score": {"type": ["number", "null"]},
+    "status": {"type": ["string", "null"]}
+  },
+  "additionalProperties": true
+}
