@@ -7,26 +7,50 @@ import gzip
 import hashlib
 import json
 import logging
+import subprocess
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-import subprocess
-from typing import Callable, Sequence
-
 
 LOGGER = logging.getLogger("smart_er.ingestion")
 TABLES = ("edstays", "triage", "vitalsign")
 HEADERS = {
     "edstays": (
-        "subject_id", "hadm_id", "stay_id", "intime", "outtime", "gender",
-        "race", "arrival_transport", "disposition",
+        "subject_id",
+        "hadm_id",
+        "stay_id",
+        "intime",
+        "outtime",
+        "gender",
+        "race",
+        "arrival_transport",
+        "disposition",
     ),
     "triage": (
-        "subject_id", "stay_id", "temperature", "heartrate", "resprate",
-        "o2sat", "sbp", "dbp", "pain", "acuity", "chiefcomplaint",
+        "subject_id",
+        "stay_id",
+        "temperature",
+        "heartrate",
+        "resprate",
+        "o2sat",
+        "sbp",
+        "dbp",
+        "pain",
+        "acuity",
+        "chiefcomplaint",
     ),
     "vitalsign": (
-        "subject_id", "stay_id", "charttime", "temperature", "heartrate",
-        "resprate", "o2sat", "sbp", "dbp", "rhythm", "pain",
+        "subject_id",
+        "stay_id",
+        "charttime",
+        "temperature",
+        "heartrate",
+        "resprate",
+        "o2sat",
+        "sbp",
+        "dbp",
+        "rhythm",
+        "pain",
     ),
 }
 
@@ -44,10 +68,7 @@ class IngestionConfig:
     replace: bool = False
 
     def object_uri(self, table: str) -> str:
-        return (
-            f"gs://{self.bucket}/mimic-iv-ed/{self.version}/ed/"
-            f"{table}.csv.gz"
-        )
+        return f"gs://{self.bucket}/mimic-iv-ed/{self.version}/ed/{table}.csv.gz"
 
 
 @dataclass(frozen=True)
@@ -86,10 +107,7 @@ def _validate_file(table: str, path: Path) -> SourceValidation:
             reader = csv.reader(stream)
             header = tuple(next(reader))
             if header != HEADERS[table]:
-                raise ValueError(
-                    f"Unexpected header in {path.name}. "
-                    f"Expected {HEADERS[table]}, got {header}"
-                )
+                raise ValueError(f"Unexpected header in {path.name}. Expected {HEADERS[table]}, got {header}")
             row_count = sum(1 for _ in reader)
     except (gzip.BadGzipFile, EOFError) as exc:
         raise ValueError(f"Invalid gzip file: {path}") from exc
@@ -121,7 +139,10 @@ def validate_sources(config: IngestionConfig) -> list[SourceValidation]:
         results.append(result)
         LOGGER.info(
             "Validated %s: rows=%d bytes=%d sha256=%s",
-            table, result.row_count, result.size_bytes, result.sha256,
+            table,
+            result.row_count,
+            result.size_bytes,
+            result.sha256,
         )
     return results
 
@@ -132,18 +153,23 @@ def _ensure_dataset(config: IngestionConfig, runner: Runner) -> None:
         ["bq", "show", "--format=json", destination],
         capture_output=True,
         text=True,
+        check=False,
     )
     if show.returncode == 0:
         metadata = json.loads(show.stdout)
         actual_location = metadata.get("location", "").lower()
         if actual_location != config.location.lower():
-            raise ValueError(
-                f"Dataset {destination} is in {actual_location}, expected {config.location}"
-            )
+            raise ValueError(f"Dataset {destination} is in {actual_location}, expected {config.location}")
         return
-    runner([
-        "bq", "mk", "--dataset", f"--location={config.location}", destination,
-    ])
+    runner(
+        [
+            "bq",
+            "mk",
+            "--dataset",
+            f"--location={config.location}",
+            destination,
+        ]
+    )
 
 
 def _upload_source(
@@ -152,13 +178,26 @@ def _upload_source(
     runner: Runner,
 ) -> None:
     uri = config.object_uri(validation.table)
-    runner([
-        "gcloud", "storage", "cp", validation.path, uri,
-        f"--custom-metadata=source-sha256={validation.sha256}",
-    ])
-    described = runner([
-        "gcloud", "storage", "objects", "describe", uri, "--format=json",
-    ])
+    runner(
+        [
+            "gcloud",
+            "storage",
+            "cp",
+            validation.path,
+            uri,
+            f"--custom-metadata=source-sha256={validation.sha256}",
+        ]
+    )
+    described = runner(
+        [
+            "gcloud",
+            "storage",
+            "objects",
+            "describe",
+            uri,
+            "--format=json",
+        ]
+    )
     metadata = json.loads(described.stdout)
     if int(metadata["size"]) != validation.size_bytes:
         raise ValueError(f"Uploaded object size mismatch: {uri}")
@@ -174,18 +213,25 @@ def _load_bronze(
 ) -> None:
     destination = f"{config.project}:{config.dataset}.{validation.table}"
     command = [
-        "bq", "load", f"--project_id={config.project}",
-        f"--location={config.location}", "--source_format=CSV",
-        "--skip_leading_rows=1", "--allow_quoted_newlines",
-        "--null_marker=", "--encoding=UTF-8",
+        "bq",
+        "load",
+        f"--project_id={config.project}",
+        f"--location={config.location}",
+        "--source_format=CSV",
+        "--skip_leading_rows=1",
+        "--allow_quoted_newlines",
+        "--null_marker=",
+        "--encoding=UTF-8",
     ]
     if config.replace:
         command.append("--replace")
-    command.extend([
-        destination,
-        config.object_uri(validation.table),
-        str(config.schema_dir / f"{validation.table}.json"),
-    ])
+    command.extend(
+        [
+            destination,
+            config.object_uri(validation.table),
+            str(config.schema_dir / f"{validation.table}.json"),
+        ]
+    )
     runner(command)
 
     described = runner(["bq", "show", "--format=json", destination])
@@ -197,8 +243,7 @@ def _load_bronze(
         raise ValueError(f"Bronze table schema mismatch: {destination}")
     if int(metadata.get("numRows", 0)) != validation.row_count:
         raise ValueError(
-            f"Row count mismatch for {destination}: expected "
-            f"{validation.row_count}, got {metadata.get('numRows')}"
+            f"Row count mismatch for {destination}: expected {validation.row_count}, got {metadata.get('numRows')}"
         )
 
 
@@ -206,10 +251,7 @@ def planned_commands(
     config: IngestionConfig,
     validations: Sequence[SourceValidation],
 ) -> list[str]:
-    commands = [
-        f"ensure BigQuery dataset {config.project}:{config.dataset} "
-        f"in {config.location}"
-    ]
+    commands = [f"ensure BigQuery dataset {config.project}:{config.dataset} in {config.location}"]
     for validation in validations:
         commands.append(f"upload unchanged {validation.path} -> {config.object_uri(validation.table)}")
         disposition = "replace" if config.replace else "create only"

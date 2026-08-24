@@ -1,0 +1,16 @@
+[project]
+name = "smart-emergency-room"
+version = "0.4.0"
+requires-python = ">=3.11"
+dependencies = ["kafka-python-ng==2.2.3"]
+
+[project.optional-dependencies]
+dev = ["ruff==0.16.4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "batch/tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

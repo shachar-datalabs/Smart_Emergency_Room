@@ -5,15 +5,16 @@ from __future__ import annotations
 
 import argparse
 import logging
-from pathlib import Path
 import subprocess
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "batch" / "src"))
 
-from ingestion.mimic_ed import IngestionConfig, ingest, write_manifest  # noqa: E402
+from ingestion.mimic_ed import IngestionConfig, ingest, write_manifest
+
+LOGGER = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,7 +33,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--apply", action="store_true", help="Create/load GCP resources.")
     parser.add_argument(
-        "--replace", action="store_true",
+        "--replace",
+        action="store_true",
         help="Replace existing Bronze tables. Without this flag, existing tables are protected.",
     )
     parser.add_argument(
@@ -62,12 +64,12 @@ def main() -> int:
         write_manifest(args.manifest, config, results)
     except subprocess.CalledProcessError as exc:
         detail = (exc.stderr or exc.stdout or "no command output").strip()
-        logging.error("Cloud command failed with exit code %s: %s", exc.returncode, detail)
+        LOGGER.error("Cloud command failed with exit code %s: %s", exc.returncode, detail)
         return 1
     except (FileNotFoundError, ValueError, RuntimeError) as exc:
-        logging.error("Ingestion failed: %s", exc)
+        LOGGER.error("Ingestion failed: %s", exc)
         return 1
-    logging.info("Ingestion %s", "completed" if args.apply else "dry run completed")
+    LOGGER.info("Ingestion %s", "completed" if args.apply else "dry run completed")
     return 0
 
 

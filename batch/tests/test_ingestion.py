@@ -2,20 +2,28 @@ from __future__ import annotations
 
 import csv
 import gzip
-from pathlib import Path
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "batch" / "src"))
 
-from ingestion.mimic_ed import HEADERS, IngestionConfig, ingest, validate_sources  # noqa: E402
-
+from ingestion.mimic_ed import HEADERS, IngestionConfig, ingest, validate_sources
 
 ROWS = {
-    "edstays": ["100001", "200001", "300001", "2130-01-01 10:00:00", "2130-01-01 12:00:00", "F", "OTHER", "WALK IN", "HOME"],
+    "edstays": [
+        "100001",
+        "200001",
+        "300001",
+        "2130-01-01 10:00:00",
+        "2130-01-01 12:00:00",
+        "F",
+        "OTHER",
+        "WALK IN",
+        "HOME",
+    ],
     "triage": ["100001", "300001", "98.6", "80", "18", "99", "120", "70", "2", "3", "Headache, mild"],
     "vitalsign": ["100001", "300001", "2130-01-01 10:30:00", "98.7", "82", "18", "99", "121", "71", "Sinus", "2"],
 }
@@ -26,9 +34,7 @@ class IngestionTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.source_dir = Path(self.temp.name)
         for table, header in HEADERS.items():
-            with gzip.open(
-                self.source_dir / f"{table}.csv.gz", "wt", encoding="utf-8", newline=""
-            ) as stream:
+            with gzip.open(self.source_dir / f"{table}.csv.gz", "wt", encoding="utf-8", newline="") as stream:
                 writer = csv.writer(stream)
                 writer.writerow(header)
                 writer.writerow(ROWS[table])
@@ -52,9 +58,7 @@ class IngestionTests(unittest.TestCase):
         self.assertTrue(all(len(result.sha256) == 64 for result in results))
 
     def test_rejects_header_mismatch(self) -> None:
-        with gzip.open(
-            self.source_dir / "triage.csv.gz", "wt", encoding="utf-8", newline=""
-        ) as stream:
+        with gzip.open(self.source_dir / "triage.csv.gz", "wt", encoding="utf-8", newline="") as stream:
             csv.writer(stream).writerows((("wrong", "header"), ("1", "2")))
         with self.assertRaisesRegex(ValueError, "Unexpected header"):
             validate_sources(self.config)

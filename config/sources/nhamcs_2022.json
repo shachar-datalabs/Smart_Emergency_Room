@@ -1,0 +1,9 @@
+{
+  "source_system": "CDC_NHAMCS_ED",
+  "year": 2022,
+  "url": "https://ftp.cdc.gov/pub/health_statistics/nchs/datasets/NHAMCS/ed2022.zip",
+  "sha256": "a513693ed05b98bf94d2ff48b50de85afe48dd63cd7d43fb0930f914b18a9f25",
+  "local_raw_prefix": "data/raw/nhamcs/2022",
+  "gcs_raw_prefix": "raw/nhamcs/2022",
+  "license": "CDC/NCHS public-use data"
+}

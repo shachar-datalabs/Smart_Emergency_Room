@@ -1,0 +1,35 @@
+-- Prepared only; not executed under the zero-cost policy.
+CREATE TABLE IF NOT EXISTS `shachar-bigquery-lab.smart_er_silver.clean_ed_visits` (
+  visit_id STRING NOT NULL,
+  patient_id STRING,
+  arrival_time TIMESTAMP,
+  arrival_hour INT64,
+  visit_month INT64,
+  visit_weekday STRING,
+  weekend_flag BOOL,
+  age INT64,
+  sex STRING,
+  triage_level INT64,
+  chief_complaint STRING,
+  temperature FLOAT64,
+  heart_rate FLOAT64,
+  respiratory_rate FLOAT64,
+  systolic_bp FLOAT64,
+  diastolic_bp FLOAT64,
+  spo2 FLOAT64,
+  pain_score FLOAT64,
+  diagnosis_code STRING,
+  diagnosis_description STRING,
+  disposition STRING,
+  admitted_flag BOOL,
+  waiting_time_minutes FLOAT64,
+  length_of_stay_minutes FLOAT64,
+  source_system STRING NOT NULL,
+  source_record_id STRING NOT NULL,
+  source_weight FLOAT64,
+  ingestion_timestamp TIMESTAMP NOT NULL,
+  data_quality_flags ARRAY<STRING>,
+  data_quality_status STRING NOT NULL
+)
+PARTITION BY DATE(ingestion_timestamp)
+CLUSTER BY triage_level, disposition, data_quality_status;

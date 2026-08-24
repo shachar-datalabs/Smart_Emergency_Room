@@ -1,2 +1,1 @@
-# PHASE 0 uses only the Python standard library.
-# Runtime dependencies will be pinned when their implementation phase begins.
+kafka-python-ng==2.2.3
