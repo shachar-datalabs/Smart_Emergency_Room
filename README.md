@@ -5,8 +5,10 @@ emergency-department data with a simulated live patient-event stream. It builds
 a continuously updated operational ED view, historical wait context and
 explainable attention indicators for BI.
 
-> This is an educational operational analytics system—not a diagnostic tool,
+> This is an educational operational analytics system - not a diagnostic tool,
 > validated clinical decision-support system, or replacement for medical triage.
+> Historical benchmarks use 16,025 real, anonymized CDC NHAMCS 2022 visits.
+> Active patients, streaming events and current dashboard KPIs are synthetic.
 
 ## Business problem
 
@@ -35,6 +37,15 @@ flowchart LR
 ```
 
 See [architecture.md](docs/architecture.md) for design details.
+
+## Dashboard demo
+
+[Open the generated Smart Emergency Room dashboard](dashboards/smart_er_dashboard.html).
+
+The committed dashboard is a deterministic demonstration snapshot. Its expected
+wait benchmarks come from real, anonymized CDC NHAMCS 2022 visit records. The
+active queue, patient identifiers, events, vital signs and current KPIs are
+synthetic and are not connected to a live hospital system.
 
 ## Historical source and layers
 
@@ -190,6 +201,8 @@ The dashboard contract is in
 [smart_er_dashboard.md](dashboards/smart_er_dashboard.md). A future production
 deployment can replace local outputs with GCS/BigQuery sinks and connect Looker
 Studio, while retaining the same source adapter, event and Gold contracts.
+The latest generated demonstration snapshot is committed as
+[`dashboards/smart_er_dashboard.html`](dashboards/smart_er_dashboard.html).
 
 The Google Sheets package remains a presentation-ready backup generated with:
 
