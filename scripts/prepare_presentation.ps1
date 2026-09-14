@@ -46,7 +46,7 @@ Write-Step "Checking prerequisites"
 Require-Command git
 Require-Command docker
 Require-Command bq
-Invoke-Python --version
+Invoke-Python "--version"
 docker version | Out-Null
 docker compose version
 bq version
@@ -58,18 +58,18 @@ if (-not (Test-Path ".env")) {
 
 if (-not $SkipInstall) {
     Write-Step "Installing Python dependencies"
-    Invoke-Python -m pip install -r requirements.txt
+    Invoke-Python "-m" "pip" "install" "-r" "requirements.txt"
 }
 
 if (-not (Test-Path "data/raw/nhamcs/2022")) {
     Write-Step "Downloading the CDC NHAMCS 2022 source"
-    Invoke-Python scripts/download_data.py
+    Invoke-Python "scripts/download_data.py"
 }
 
 if (-not (Test-Path "data/gold/current_ed_state_base.jsonl")) {
     Write-Step "Building historical and deterministic demo outputs"
-    Invoke-Python scripts/run_historical_pipeline.py
-    Invoke-Python scripts/run_end_to_end_demo.py
+    Invoke-Python "scripts/run_historical_pipeline.py"
+    Invoke-Python "scripts/run_end_to_end_demo.py"
 }
 
 Write-Step "Validating Docker configuration"
@@ -88,13 +88,13 @@ finally {
 }
 
 Write-Step "Checking the BigQuery load plan without writing"
-Invoke-Python scripts/sync_bigquery.py
+Invoke-Python "scripts/sync_bigquery.py"
 
 if ($RunTests) {
     Write-Step "Running project tests"
-    Invoke-Python -m unittest discover -s tests -v
-    Invoke-Python -m unittest discover -s batch/tests -p "test*.py" -v
-    Invoke-Python scripts/test_phase0.py
+    Invoke-Python "-m" "unittest" "discover" "-s" "tests" "-v"
+    Invoke-Python "-m" "unittest" "discover" "-s" "batch/tests" "-p" "test*.py" "-v"
+    Invoke-Python "scripts/test_phase0.py"
 }
 
 Write-Host ""
