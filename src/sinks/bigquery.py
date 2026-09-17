@@ -4,7 +4,6 @@ import json
 import os
 import shutil
 import subprocess
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +62,8 @@ def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
     try:
         return subprocess.run(command, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as exc:
-        detail = (exc.stderr or exc.stdout or "no CLI output").strip()
+        outputs = [part.strip() for part in (exc.stdout, exc.stderr) if part and part.strip()]
+        detail = "\n".join(outputs) or "no CLI output"
         raise RuntimeError(f"Command failed ({exc.returncode}): {detail}") from exc
 
 
@@ -95,8 +95,8 @@ def sync_tables(root: Path, project: str, dataset: str, location: str, *, apply:
     if not apply:
         return plan
 
-    def load_table(item: tuple[str, Path]) -> None:
-        table, path = item
+    for table, path in paths.items():
+        print(f"Loading BigQuery table: {table}", flush=True)
         _run(
             [
                 "bq",
@@ -110,8 +110,6 @@ def sync_tables(root: Path, project: str, dataset: str, location: str, *, apply:
             ]
         )
 
-    with ThreadPoolExecutor(max_workers=len(paths)) as pool:
-        list(pool.map(load_table, paths.items()))
     plan["applied"] = True
     return plan
 
